@@ -5,28 +5,32 @@ ranking_bp = Blueprint("ranking", __name__)
 
 @ranking_bp.route("/", methods=["GET"])
 def obtener_ranking_usuarios():
+    limit = request.args.get(
+        "_limit", default=10, type=int
+    )  # cantidad de apariciones por pagina
+    offset = request.args.get(
+        "_offset", default=0, type=int
+    )  # posicion desde donde empieza a leer
+    if limit is None or offset is None or limit <= 0 or offset < 0:
+        error_400 = {
+            "errors": [
+                {
+                    "code": "400",
+                    "message": "Bad Request",
+                    "level": "error",
+                    "description": "El limit o el offset tienen un dato invalido o son negativos",
+                }
+            ]
+        }
+        return jsonify(error_400), 400
+
+    conn = None
+    cur = None
     try:
         conn = get_connection()
         cur = conn.cursor(dictionary=True)
         ranking = []
-        limit = request.args.get(
-            "_limit", default=10, type=int
-        )  # cantidad de apariciones por pagina
-        offset = request.args.get(
-            "_offset", default=0, type=int
-        )  # posicion desde donde empieza a leer
-        if limit is None or offset is None or limit <= 0 or offset < 0:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "400",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El limit o el offset tienen un dato invalido o son negativos",
-                    }
-                ]
-            }
-            return jsonify(error_400), 400
+
         cur.execute(
             """
         SELECT r.id_partido, 
@@ -76,15 +80,15 @@ ON r.id_partido = p.id_partido
         cantidad_usuarios = len(ranking)
         if offset >= cantidad_usuarios:
             error_400 = {
-            "errors": [
-                {
-                    "code": "400",
-                    "message": "Bad Request",
-                    "level": "error",
-                    "description": "El offset excede la cantidad de predicciones",
-                }
-            ]
-        }
+                "errors": [
+                    {
+                        "code": "400",
+                        "message": "Bad Request",
+                        "level": "error",
+                        "description": "El offset excede la cantidad de usuarios en el ranking",
+                    }
+                ]
+            }
             return jsonify(error_400), 400
         ranking = ranking[offset : offset + limit]
         primera_pagina = 0
@@ -108,8 +112,7 @@ ON r.id_partido = p.id_partido
                 "href": f"http://localhost:5000/ranking?_offset={ultima_pagina}&_limit={limit}"
             },
         }
-        cur.close()
-        conn.close()
+
         return jsonify({"ranking": ranking, "_links": links}), 200
 
     except Exception as e:
@@ -124,3 +127,8 @@ ON r.id_partido = p.id_partido
             ]
         }
         return jsonify(error_500), 500
+    finally:
+        if cur:
+            cur.close()
+        if conn:
+            conn.close()
