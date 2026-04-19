@@ -111,7 +111,7 @@ def crear_partido():
             else: 
                  query = """
                 INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase)
-                VALUES (%s %s %s %s)
+                VALUES (%s, %s, %s, %s)
                 """
             cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase.lower()))
             conn.commit()
