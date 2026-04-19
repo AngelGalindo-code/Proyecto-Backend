@@ -46,7 +46,8 @@ def listar_partidos():
             query += " WHERE " + " AND ".join(filtros)
 
         query += " LIMIT %s OFFSET %s"
-        
+
+        valores_query.extend([limit, offset])     
         cursor.execute(query, valores_query)
         partidos = cursor.fetchall()
         
