@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from database import get_connection
+from db import get_connection
 from .errores import (bad_request, not_found, conflict, server_error)
 
 

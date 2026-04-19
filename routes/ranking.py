@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-
+from db import get_connection
 ranking_bp = Blueprint("ranking", __name__)
 
 

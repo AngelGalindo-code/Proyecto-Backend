@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
 from .errores import bad_request, not_found, server_error, conflict
+from db import get_connection
 
 partidos_bp = Blueprint("partidos", __name__)
 

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from mysql_database import get_db_connection
+from db import get_connection
 from .errores import(bad_request, not_found, server_error)
 
 predicciones_bp = Blueprint("predicciones", __name__)
