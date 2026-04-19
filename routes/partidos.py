@@ -166,12 +166,11 @@ def remplazar_partido(id_partido):
             error_400["errors"][0]["description"] = "Id invalido, debe ser mayor a 0"
             return jsonify(error_400), 400
     
-    data = request.get_json()
-
-    if not data:
-            error_400 = bad_request.copy()
-            error_400["errors"][0]["description"] = "No se recibió información en el cuerpo de la peticion o el formato no es JSON"
-            return jsonify(error_400), 400
+    data = request.get_json(silent= True)
+    if data == None:
+        error_400 = bad_request.copy()
+        error_400["errors"][0]["description"] = "No se recibió información en el cuerpo de la peticion o el formato no es JSON"
+        return jsonify(error_400), 400
     
     conn = None
     cursor = None
