@@ -14,16 +14,40 @@ def listar_partidos():
         conn = get_conection()
         cursor = conn.cursor(dictionary=True)
 
+        equipo = request.args.get('equipo')
+        fecha = request.args.get('fecha')
+        fase = request.args.get('fase')
         limit = request.args.get('_limit', default=10, type=int)
         offset = request.args.get('_offset', default=0, type=int)
 
-        query = """
-            SELECT id_partido, equipo_local, equipo_visitante, fecha, fase 
-            FROM partidos 
-            LIMIT %s OFFSET %s
-        """
+        if fase and fase.lower() not in fases_validas:
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "La fase proporcionada no es válida"
+            return jsonify(error_400), 400
 
-        cursor.execute(query, (limit, offset))
+
+        query = "SELECT id_partido, equipo_local, equipo_visitante, fecha, fase FROM partidos"
+        filtros = []
+        valores_query = []
+
+        if equipo:
+            filtros.append("(equipo_local = %s OR equipo_visitante = %s)")
+            valores_query.extend([equipo, equipo])
+        
+        if fecha:
+            filtros.append("fecha = %s")
+            valores_query.append(fecha)
+            
+        if fase:
+            filtros.append("fase = %s")
+            valores_query.append(fase.lower())
+
+        if filtros:
+            query += " WHERE " + " AND ".join(filtros)
+
+        query += " LIMIT %s OFFSET %s"
+        
+        cursor.execute(query, valores_query)
         partidos = cursor.fetchall()
         
         if not partidos:
