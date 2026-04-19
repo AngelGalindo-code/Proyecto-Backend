@@ -105,9 +105,9 @@ def crear_partido():
 
             check_query = """
             SELECT id_partido FROM partidos 
-            WHERE equipo_local = %s AND equipo_visitante = %s AND fecha = %s
+            WHERE equipo_local = %s AND equipo_visitante = %s AND fecha = %s AND fase = %s
             """
-            cursor.execute(check_query, (equipo_local, equipo_visitante, fecha))
+            cursor.execute(check_query, (equipo_local, equipo_visitante, fecha, fase))
             existe = cursor.fetchone()
 
             if existe:
@@ -140,7 +140,7 @@ def crear_partido():
 @partidos_bp.route('/partidos/<int:id>', methods=["GET"])
 
 def obtener_partido(id_partido):
-    if id_partido<= 0:
+    if id_partido <= 0:
             error_400 = bad_request.copy()
             error_400["errors"][0]["description"] = "Id invalido"
             return jsonify(error_400), 400
@@ -149,25 +149,17 @@ def obtener_partido(id_partido):
         conn = get_conection()
         cursor = conn.cursor()
 
-        query = """
-        SELECT id, equipo_local, equipo_visitante, fecha, fase FROM partidos
-        WHERE id = %s
-        """
-        cursor.execute(query, (id,))
-        resultado = cursor.fetchone()
-        
-        if not resultado:
-            return jsonify(not_found), 404
-        
-        partido = {
-                "id": resultado[0],
-                "equipo_local": resultado[1],
-                "equipo_visitante": resultado[2],
-                "fecha": str(resultado[3]),
-                "fase": resultado[4]
-        }
-        return jsonify(partido), 200
+        query = "SELECT * FROM partidos WHERE id_partido = %s"
+        cursor.execute(query, (id_partido,))
+        partido = cursor.fetchone() 
 
+        if partido:
+            return jsonify(partido), 200
+        else:
+            error_404 = not_found.copy()
+            error_404["errors"][0]["description"] =  "Partido no encontrado"
+            return jsonify(error_404), 404
+            
     except Exception:
             return jsonify(server_error), 500
     finally:
@@ -299,7 +291,7 @@ def eliminar_partido(id_partido):
         cursor = conn.cursor()
 
         query = "DELETE FROM partidos WHERE id = %s "
-        cursor.execute(query, (id))
+        cursor.execute(query, (id_partido))
 
         conn.commit()
         
