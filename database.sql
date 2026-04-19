@@ -3,8 +3,6 @@ USE ProDe;
 
 CREATE TABLE partidos (
 	id_partido INT AUTO_INCREMENT PRIMARY KEY NOT NULL,
-    estadio VARCHAR(50),
-    ciudad VARCHAR(50),
     equipo_local VARCHAR(50) NOT NULL,
     equipo_visitante VARCHAR(50) NOT NULL,
     fecha DATE NOT NULL,
