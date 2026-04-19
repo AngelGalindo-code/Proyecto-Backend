@@ -11,7 +11,7 @@ fases_validas = ['grupos', 'dieciseisavos', 'octavos', 'cuartos', 'semis', 'fina
 def listar_partidos():
 
     try: 
-        conn = get_conection()
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
         equipo = request.args.get('equipo')
@@ -92,7 +92,7 @@ def crear_partido():
                 return jsonify(error_400), 400
         
         try:
-            conn = get_conection()
+            conn = get_connection()
             cursor = conn.cursor()
 
             check_query = """
@@ -135,7 +135,7 @@ def obtener_partido(id_partido):
             return jsonify(error_400), 400
     try: 
         
-        conn = get_conection()
+        conn = get_connection()
         cursor = conn.cursor()
 
         query = "SELECT * FROM partidos WHERE id_partido = %s"
@@ -181,7 +181,7 @@ def remplazar_partido(id_partido):
         fecha = data.get("fecha")
         fase = data.get("fase")
 
-        conn = get_conection()
+        conn = get_connection()
         cursor = conn.cursor()
 
         query = """
@@ -228,7 +228,7 @@ def actualizar_parcialmente_partido(id_partido):
     cursor = None
 
     try: 
-        conn = get_conection()
+        conn = get_connection()
         cursor = conn.cursor()
 
         equipo_local = data.get("equipo_local")
@@ -276,7 +276,7 @@ def eliminar_partido(id_partido):
     cursor = None
 
     try:
-        conn = get_conection()
+        conn = get_connection()
         cursor = conn.cursor()
 
         query = "DELETE FROM partidos WHERE id = %s "

@@ -46,7 +46,7 @@ def listar_por_id(id):
     
     try: 
 
-        connector = get_db_connection()
+        connector = get_connection()
         cursor = connector.cursor(dictionary=True)
         cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
 
@@ -94,7 +94,7 @@ def crear_usuario():
     
     try:
 
-        connector = get_db_connection()
+        connector = get_connection()
         cursor = connector.cursor(dictionary=True)
 
 
@@ -133,7 +133,7 @@ def modificar_usuario(id, usuario=None, mail=None):
 
 
     try: 
-        connector = get_db_connection()
+        connector = get_connection()
         cursor = connector.cursor(dictionary=True)
         cursor.execute("Select * FROM usuarios WHERE id = %s", (id,))
         usuario = cursor.fetchone()
@@ -176,7 +176,7 @@ def eliminar_usuario(id):
 
 
     try:
-        connector = get_db_connection()
+        connector = get_connection()
         cursor = connector.cursor(dictionary=True)
         cursor.execute("SELECT * FROM usuarios WHERE id = %s", (id,))
         usuario = cursor.fetchone()
