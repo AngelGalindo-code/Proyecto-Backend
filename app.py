@@ -17,7 +17,5 @@ app.register_blueprint(ranking_bp)
 
 app = Flask(__name__)
 
-app.register_blueprint(partidos_bp)
-
 if __name__ == "__main__":
     app.run(port=8080, debug=True)
