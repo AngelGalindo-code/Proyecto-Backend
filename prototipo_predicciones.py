@@ -1,12 +1,16 @@
 from flask import Blueprint, request, jsonify
-from mysql_database import get_conection
+from mysql_database import get_connection
 
 
 predicciones_bp = Blueprint("predicciones", __name__)
 
 @predicciones_bp.route("/partidos/<int:id>/prediccion", methods=["POST"])
 def crear_prediccion(id):
-
+    
+    if id <= 0:
+      return jsonify({"error": "ID inválido"}), 400
+    
+    
     data = request.get_json()
     id_usuario = data.get("usuario_id")
     goles_local = data.get("goles_local")
@@ -18,13 +22,12 @@ def crear_prediccion(id):
     cursor = None
 
 
-
     try:
-        conn = get_conection()
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
         #vrificar que el partido exista
-        cursor.execute("SELECT * FROM partidos WHERE id = %s", (id,))
+        cursor.execute("SELECT * FROM partidos WHERE id_partido = %s", (id,))
         partido = cursor.fetchone()
 
         if not partido:
