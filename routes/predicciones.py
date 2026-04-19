@@ -17,7 +17,7 @@ def crear_prediccion(id):
         return jsonify(bad_request), 400
     
     try:
-        connector = get_db_connection()
+        connector = get_connection()
         cursor = connector.cursor(dictionary=True)
 
         cursor.execute("""
