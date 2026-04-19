@@ -2,9 +2,9 @@ from flask import Blueprint, jsonify, request
 from db import get_connection
 from .errores import bad_request, not_found, server_error
 
-partidos_bp = Blueprint("partidos", __name__)
+resultados_bp = Blueprint("resultados", __name__)
 
-@partidos_bp.route('/partidos/<int:id>/resultados', methods=['PUT'])
+@resultados_bp.route('/partidos/<int:id>/resultados', methods=['PUT'])
 
 def actualizar_resultado(id_partido):
 

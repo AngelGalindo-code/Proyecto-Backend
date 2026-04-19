@@ -31,7 +31,7 @@ def listar_usuarios():
 
     except Exception as e:
         error = server_error
-        error['errors'[0]['description']] = str(e) # Para que pueda leer el Json
+        error['errors'][0]['description'] = str(e) # Para que pueda leer el Json
 
 
         return jsonify(error), 500
