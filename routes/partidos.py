@@ -127,7 +127,7 @@ def crear_partido():
             if conn:
                 conn.close()
         
-@partidos_bp.route('/partidos/<int:id>', methods=["GET"])
+@partidos_bp.route('/partidos/<int:id_partido>', methods=["GET"])
 
 def obtener_partido(id_partido):
     if id_partido <= 0:
@@ -158,7 +158,7 @@ def obtener_partido(id_partido):
             if conn:
                 conn.close()
 
-@partidos_bp.route('/partidos/<int:id>', methods=['PUT'])
+@partidos_bp.route('/partidos/<int:id_partido>', methods=['PUT'])
 
 def remplazar_partido(id_partido):
     if id_partido <= 0:
@@ -209,7 +209,7 @@ def remplazar_partido(id_partido):
             if conn:
                 conn.close()
 
-@partidos_bp.route('/partidos/<int:id>', methods=['PATCH'])
+@partidos_bp.route('/partidos/<int:id_partido>', methods=['PATCH'])
 
 def actualizar_parcialmente_partido(id_partido):
 
@@ -265,7 +265,7 @@ def actualizar_parcialmente_partido(id_partido):
             if conn:
                 conn.close()
 
-@partidos_bp.route('/partidos/<int:id>', methods=['DELETE'])
+@partidos_bp.route('/partidos/<int:id_partido>', methods=['DELETE'])
 
 def eliminar_partido(id_partido):
     
