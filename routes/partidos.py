@@ -10,55 +10,22 @@ fases_validas = ['grupos', 'dieciseisavos', 'octavos', 'cuartos', 'semis', 'fina
 
 def listar_partidos():
 
-    fecha = request.args.get('fecha')
-    fase = request.args.get('fase')
-
-    if fase and fase.lower() not in fases_validas:
-        error_400 = bad_request.copy()
-        error_400["errors"][0]["description"] = "La fase proporcionada no es valida"
-        return jsonify(error_400), 400
-    if fecha:
-        try:
-            datetime.strptime(fecha, '%Y-%m-%d')
-        except ValueError:
-            error_400= bad_request.copy()
-            error_400["errors"][0]["description"] = "El formato de fecha debe ser YYYY-MM-DD"
-            return jsonify(error_400), 400
-        
-
     try: 
         conn = get_conection()
         cursor = conn.cursor(dictionary=True)
 
-        equipo = request.args.get('equipo')
-
         limit = request.args.get('_limit', default=10, type=int)
         offset = request.args.get('_offset', default=0, type=int)
 
-        query = "SELECT id_partido, equipo_local, equipo_visitante, fecha, fase FROM partidos "
-        filtros = []
-        params = []
+        query = """
+            SELECT id_partido, equipo_local, equipo_visitante, fecha, fase 
+            FROM partidos 
+            LIMIT %s OFFSET %s
+        """
 
-        if equipo:
-            filtros.append("(equipo_local = %s OR equipo_visitante = %s)")
-            params.extend([equipo,equipo])
-        if fecha:
-            filtros.append("fecha = %s")
-            params.append(fecha)
-        if fase:
-            filtros.append("fase = %s")
-            params.append(fase.lower())
-
-        if filtros: 
-            query += " WHERE " + " AND ".join(filtros)
-
-
-        query += " LIMIT %s OFFSET %s"
-        params.extend([limit, offset])
-        cursor.execute(query, params)
-
+        cursor.execute(query, (limit, offset))
         partidos = cursor.fetchall()
-
+        
         if not partidos:
             cursor.close()
             conn.close()
