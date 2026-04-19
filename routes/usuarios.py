@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from mysql_database import get_db_connection
+from database import get_connection
 from .errores import (bad_request, not_found, conflict, server_error)
 
 
@@ -13,7 +13,7 @@ def listar_usuarios():
 
     try:
         
-        connector = get_db_connection()
+        connector = get_connection()
         cursor = connector.cursor(dictionary=True)
         cursor.execute("SELECT * FROM usuarios")
         usuarios = cursor.fetchall()
