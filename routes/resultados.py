@@ -1,37 +1,23 @@
 from flask import Blueprint, jsonify, request
 
+from .errores import bad_request, not_found, server_error
+
 partidos_bp = Blueprint("partidos", __name__)
 
 @partidos_bp.route('/partidos/<int:id>/resultados', methods=['PUT'])
 
-def actualizar_resultado(id):
+def actualizar_resultado(id_partido):
 
-    if id <= 0:
-            error_400 = {
-                  "errors": [
-                        {
-                            "code": "400",
-                            "message": "Bad request",
-                            "level": "error",
-                            "description": "El id debe ser mayor a 0"
-                        }
-                  ]
-            }
+    if id_partido<= 0:
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "Id invalido, debe ser mayor a 0"
             return jsonify(error_400), 400
     
     data = request.get_json()
     
     if not data or "local" not in data or "visitante" not in data:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "EMPTY_BODY",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El cuerpo de la solicitud es obligatorio y debe ser JSON"
-                    }
-                ]
-            }
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "No se recibió información en el cuerpo de la peticion o el formato no es JSON"
             return jsonify(error_400), 400
     
     conn = None
@@ -41,46 +27,29 @@ def actualizar_resultado(id):
         conn = get_connection()
         cursor = conn.cursor()
 
-        resultado_local = data.get('resultado_local')
-        resultado_visitante = data.get('resultado_visitante')
+        goles_local = data.get('goles_local')
+        goles_visitante = data.get('goles_visitante')
 
         query = """
             UPDATE partidos
-            SET resultado_local = %s,
-                resultado_visitante = %s
+            SET goles_local = %s,
+                goles_visitante = %s
             WHERE id = %s
 
         """
-        cursor.execute(query, (resultado_local, resultado_visitante, id))
+        cursor.execute(query, (goles_local, goles_visitante, id_partido))
         conn.commit()
 
         if cursor.rowcount == 0:
-            error_400 = {
-                "errors": [
-                    {
-                    "code": "NOT_FOUND",
-                    "message": "Bad Request",
-                    "level": "error",
-                    "description": f"El partido con ID {id} no existe, no se pudo actualizar."
-                    }
-                ]
-            }
-            return jsonify(error_400), 400
+            error_404 = not_found.copy()
+            error_404["errors"][0]["description"] = f"El partido con ID {id_partido} no existe, no se pudo actualizar."
+            return jsonify(error_404), 404
         
         return '', 204
 
-    except Exception as e:
-            error_500 = {
-                "errors": [
-                    {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Ocurrio un error inesperado en el servidor",
-                    "level": "error",
-                    "description": str(e)
-                    }
-                ]
-            }
-            return jsonify(error_500), 500
+    except Exception:
+   
+            return jsonify(server_error), 500
     finally:
             if cursor:
                 cursor.close()

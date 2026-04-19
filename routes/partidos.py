@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
+from .errores import bad_request, not_found, server_error, conflict
 
 partidos_bp = Blueprint("partidos", __name__)
 
@@ -13,32 +14,16 @@ def listar_partidos():
     fase = request.args.get('fase')
 
     if fase and fase.lower() not in fases_validas:
-        error_bad_request = {
-            "errors": [
-                {      
-                    "code": "XXX",
-                    "message": "Mensaje",
-                    "level": "error",
-                    "description": "Fase invalida"
-                }
-            ]
-        }
-        return jsonify(error_bad_request), 400
+        error_400 = bad_request.copy()
+        error_400["errors"][0]["description"] = "La fase proporcionada no es valida"
+        return jsonify(error_400), 400
     if fecha:
         try:
             datetime.strptime(fecha, '%Y-%m-%d')
         except ValueError:
-            error_bad_request = {
-            "errors": [
-                    {      
-                        "code": "XXX",
-                        "message": "Mensaje",
-                        "level": "error",
-                        "description": "Fecha invalida"
-                    }
-                ]
-            }
-            return jsonify(error_bad_request), 400
+            error_400= bad_request.copy()
+            error_400["errors"][0]["description"] = "El formato de fecha debe ser YYYY-MM-DD"
+            return jsonify(error_400), 400
         
 
     try: 
@@ -50,7 +35,7 @@ def listar_partidos():
         limit = request.args.get('_limit', default=10, type=int)
         offset = request.args.get('_offset', default=0, type=int)
 
-        query = "SELECT id, equipo_local, equipo_visitante, fecha, fase FROM partidos "
+        query = "SELECT id_partido, equipo_local, equipo_visitante, fecha, fase FROM partidos "
         filtros = []
         params = []
 
@@ -83,18 +68,8 @@ def listar_partidos():
             conn.close()
             return jsonify({"partidos": partidos}), 200
         
-    except Exception as e:
-            error_500 = {
-                "errors": [
-                    {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Ocurrio un error inesperado en el servidor",
-                    "level": "error",
-                    "description": str(e)
-                    }
-                ]
-            }
-            return jsonify(error_500), 500
+    except Exception:
+        return jsonify(server_error), 500
 
 @partidos_bp.route('/partidos', methods=["POST"])
 
@@ -108,54 +83,43 @@ def crear_partido():
         fase = data.get('fase')
 
         if not equipo_local or not equipo_visitante or not fecha or not fase:
-            error_bad_request = {
-                "errors": [
-                    {
-                        "code": "XXX",
-                        "message": "Mensaje",
-                        "level": "error",
-                        "description": "Descripción"
-                    }
-                ]
-            }
-            return jsonify(error_bad_request), 400
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "Faltan campos obligatorios: equipo_local, equipo_visitante, fecha o fase"
+            return jsonify(error_400), 400
         
         if fase.lower() not in fases_validas:
-            error_bad_request = {
-                "errors": [
-                    {
-                        "code": "XXX",
-                        "message": "Mensaje",
-                        "level": "error",
-                        "description": "Descripción"
-                    }
-                ]
-            }
-            return jsonify(error_bad_request), 400
+            error_400 = bad_request.copy
+            error_400["errors"][0]["description"] = "La fase no es valida"
+            return jsonify(error_400), 400
         if fecha:
             try:
                 datetime.strptime(fecha, '%Y-%m-%d')
             except ValueError:
-                error_bad_request = {
-                    "errors": [
-                    {      
-                        "code": "XXX",
-                        "message": "Mensaje",
-                        "level": "error",
-                        "description": "Fecha invalida"
-                    }
-                ]
-            }
-            return jsonify(error_bad_request), 400
+                error_400= bad_request.copy()
+                error_400["errors"][0]["description"] = "El formato de fecha debe ser YYYY-MM-DD"
+                return jsonify(error_400), 400
         
         try:
             conn = get_conection()
             cursor = conn.cursor()
 
-            query = """
-            INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase)
-            VALUES (%s %s %s %s)
+            check_query = """
+            SELECT id_partido FROM partidos 
+            WHERE equipo_local = %s AND equipo_visitante = %s AND fecha = %s
             """
+            cursor.execute(check_query, (equipo_local, equipo_visitante, fecha))
+            existe = cursor.fetchone()
+
+            if existe:
+                error_409 = conflict.copy()
+                error_409["errors"][0]["description"] = "Ya existe un partido programado entre estos equipos en esa fecha."
+                return jsonify(error_409), 409
+
+            else: 
+                 query = """
+                INSERT INTO partidos (equipo_local, equipo_visitante, fecha, fase)
+                VALUES (%s %s %s %s)
+                """
             cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase.lower()))
             conn.commit()
 
@@ -164,18 +128,8 @@ def crear_partido():
         
             return jsonify({"message" : "partido creado"}), 201
         
-        except Exception as e:
-            error_500 = {
-                "errors": [
-                    {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Ocurrio un error inesperado en el servidor",
-                    "level": "error",
-                    "description": str(e)
-                    }
-                ]
-            }
-            return jsonify(error_500), 500
+        except Exception:
+            return jsonify(server_error), 500
         
         finally:
             if cursor:
@@ -185,18 +139,10 @@ def crear_partido():
         
 @partidos_bp.route('/partidos/<int:id>', methods=["GET"])
 
-def obtener_partido(id):
-    if id <= 0:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "INVALID_ID",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El id debe ser mayor a 0"
-                    }
-                ]
-            }
+def obtener_partido(id_partido):
+    if id_partido<= 0:
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "Id invalido"
             return jsonify(error_400), 400
     try: 
         
@@ -211,17 +157,7 @@ def obtener_partido(id):
         resultado = cursor.fetchone()
         
         if not resultado:
-            error_not_found = {
-                "errors": [
-                    {
-                        "code": "XXX",
-                        "message": "Mensaje",
-                        "level": "error",
-                        "description": "Descripción"
-                    }
-                ]         
-            }
-            return jsonify(error_not_found), 404
+            return jsonify(not_found), 404
         
         partido = {
                 "id": resultado[0],
@@ -232,18 +168,8 @@ def obtener_partido(id):
         }
         return jsonify(partido), 200
 
-    except Exception as e:
-            error_500 = {
-                "errors": [
-                    {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Ocurrio un error inesperado en el servidor",
-                    "level": "error",
-                    "description": str(e)
-                    }
-                ]
-            }
-            return jsonify(error_500), 500
+    except Exception:
+            return jsonify(server_error), 500
     finally:
             if cursor:
                 cursor.close()
@@ -252,33 +178,17 @@ def obtener_partido(id):
 
 @partidos_bp.route('/partidos/<int:id>', methods=['PUT'])
 
-def remplazar_partido(id):
-    if id <= 0:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "INVALID_ID",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El id debe ser mayor a 0"
-                    }
-                ]
-            }
+def remplazar_partido(id_partido):
+    if id_partido <= 0:
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "Id invalido, debe ser mayor a 0"
             return jsonify(error_400), 400
     
     data = request.get_json()
 
     if not data:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "EMPTY_BODY",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El cuerpo de la solicitud es obligatorio y debe ser JSON"
-                    }
-                ]
-            }
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "No se recibió información en el cuerpo de la peticion o el formato no es JSON"
             return jsonify(error_400), 400
     
     conn = None
@@ -303,32 +213,14 @@ def remplazar_partido(id):
         conn.commit()
 
         if cursor.rowcount == 0:
-            error_400 = {
-                "errors": [
-                    {
-                    "code": "NOT_FOUND",
-                    "message": "Bad Request",
-                    "level": "error",
-                    "description": f"El partido con ID {id} no existe, no se pudo actualizar."
-                    }
-                ]
-            }
-            return jsonify(error_400), 400
+            error_404 = not_found.copy()
+            error_404["errors"][0]["description"] = f"El partido con ID {id} no existe, no se pudo actualizar."
+            return jsonify(error_404), 404
         
         return '', 204
 
-    except Exception as e:
-            error_500 = {
-                "errors": [
-                    {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Ocurrio un error inesperado en el servidor",
-                    "level": "error",
-                    "description": str(e)
-                    }
-                ]
-            }
-            return jsonify(error_500), 500
+    except Exception:
+            return jsonify(server_error), 500
     finally:
             if cursor:
                 cursor.close()
@@ -337,34 +229,18 @@ def remplazar_partido(id):
 
 @partidos_bp.route('/partidos/<int:id>', methods=['PATCH'])
 
-def actualizar_parcialmente_partido(id):
+def actualizar_parcialmente_partido(id_partido):
 
-    if id <= 0:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "INVALID_ID",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El id debe ser mayor a 0"
-                    }
-                ]
-            }
+    if id_partido <= 0:
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "Id invalido, debe ser mayor a 0"
             return jsonify(error_400), 400
     
     data = request.get_json()
 
     if not data:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "EMPTY_BODY",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El cuerpo de la solicitud es obligatorio y debe ser JSON"
-                    }
-                ]
-            }
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "No se recibió información en el cuerpo de la peticion o el formato no es JSON"
             return jsonify(error_400), 400
     
     conn = None
@@ -388,36 +264,19 @@ def actualizar_parcialmente_partido(id):
         WHERE id = %s
         """
 
-        cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase, id))
+        cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase, id_partido))
         conn.commit()
         
         if cursor.rowcount == 0:
-            error_400 = {
-                "errors": [
-                    {
-                    "code": "NOT_FOUND",
-                    "message": "Bad Request",
-                    "level": "error",
-                    "description": f"El partido con ID {id} no existe, no se pudo actualizar."
-                    }
-                ]
-            }
-            return jsonify(error_400), 400
+            error_404 = not_found.copy()
+            error_404["errors"][0]["description"] = f"El partido con ID {id_partido} no existe, no se pudo actualizar."
+            return jsonify(error_404), 404
+
         
         return '', 204
 
-    except Exception as e:
-            error_500 = {
-                "errors": [
-                    {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Ocurrio un error inesperado en el servidor",
-                    "level": "error",
-                    "description": str(e)
-                    }
-                ]
-            }
-            return jsonify(error_500), 500
+    except Exception:
+            return jsonify(server_error), 500
     finally:
             if cursor:
                 cursor.close()
@@ -426,19 +285,11 @@ def actualizar_parcialmente_partido(id):
 
 @partidos_bp.route('/partidos/<int:id>', methods=['DELETE'])
 
-def eliminar_partido(id):
+def eliminar_partido(id_partido):
     
-    if id <= 0:
-            error_400 = {
-                "errors": [
-                    {
-                        "code": "INVALID_ID",
-                        "message": "Bad Request",
-                        "level": "error",
-                        "description": "El id debe ser mayor a 0"
-                    }
-                ]
-            }
+    if id_partido <= 0:
+            error_400 = bad_request.copy()
+            error_400["errors"][0]["description"] = "Id invalido, debe ser mayor a 0"
             return jsonify(error_400), 400
     conn = None
     cursor = None
@@ -453,31 +304,14 @@ def eliminar_partido(id):
         conn.commit()
         
         if cursor.rowcount == 0:
-            error_400 = {
-                "errors": [
-                    {
-                    "code": "NOT_FOUND",
-                    "message": "Bad Request",
-                    "level": "error",
-                    "description": f"El partido con ID {id} no existe, no se pudo actualizar."
-                    }
-                ]
-            }
-            return jsonify(error_400), 400
+            error_404 = not_found.copy()
+            error_404["errors"][0]["description"] = f"El partido con ID {id_partido} no existe, no se pudo actualizar."
+            return jsonify(error_404), 404
+        
         
         return '', 204
-    except Exception as e:
-            error_500 = {
-                "errors": [
-                    {
-                    "code": "INTERNAL_ERROR",
-                    "message": "Ocurrio un error inesperado en el servidor",
-                    "level": "error",
-                    "description": str(e)
-                    }
-                ]
-            }
-            return jsonify(error_500), 500
+    except Exception:
+            return jsonify(server_error), 500
     finally:
             if cursor:
                 cursor.close()
