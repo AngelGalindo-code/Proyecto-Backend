@@ -12,11 +12,26 @@ def crear_prediccion(id):
     
     
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "Body vacío o inválido"}), 400
+    
+    
     id_usuario = data.get("usuario_id")
     goles_local = data.get("goles_local")
     goles_visitante = data.get("goles_visitante")
-    if not id_usuario or goles_local is None or goles_visitante is None:
+    
+    
+    if id_usuario is None or goles_local is None or goles_visitante is None:
         return jsonify({"error": "Datos incompletos"}), 400
+
+
+    try:
+        id_usuario = int(id_usuario)
+        goles_local = int(goles_local)
+        goles_visitante = int(goles_visitante)
+    except (TypeError, ValueError):
+        return jsonify({"error": "Datos inválidos"}), 400
+
 
     conn = None
     cursor = None
@@ -56,6 +71,7 @@ def crear_prediccion(id):
         """, (id_usuario, id, goles_local, goles_visitante))
 
         conn.commit()
+
 
         return jsonify({"message": "Predicción creada"}), 201
 
