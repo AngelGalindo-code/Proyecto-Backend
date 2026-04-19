@@ -191,7 +191,7 @@ def remplazar_partido(id_partido):
         WHERE id = %s
         """
 
-        cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase, id))
+        cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase, id_partido))
         conn.commit()
 
         if cursor.rowcount == 0:
