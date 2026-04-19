@@ -122,10 +122,7 @@ def crear_partido():
                 """
             cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase.lower()))
             conn.commit()
-
-            cursor.close()
-            conn.close()
-        
+            
             return jsonify({"message" : "partido creado"}), 201
         
         except Exception:
