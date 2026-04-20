@@ -3,7 +3,7 @@ from db import get_connection
 ranking_bp = Blueprint("ranking", __name__)
 
 
-@ranking_bp.route("/", methods=["GET"])
+@ranking_bp.route("/ranking", methods=["GET"])
 def obtener_ranking_usuarios():
     limit = request.args.get(
         "_limit", default=10, type=int

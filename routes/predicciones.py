@@ -5,8 +5,8 @@ from .errores import(bad_request, not_found, server_error)
 predicciones_bp = Blueprint("predicciones", __name__)
 
 
-@predicciones_bp.route("/<int:id>/predicciones/", methods=['POST'])
-def crear_prediccion(id):
+@predicciones_bp.route("/partidos/<int:id_partido>/predicciones", methods=['POST'])
+def crear_prediccion(id_partido):
 
     data = request.get_json()
     id_usuario = data.get('usuario_id')
