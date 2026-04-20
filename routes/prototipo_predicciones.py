@@ -1,11 +1,10 @@
 from flask import Blueprint, request, jsonify
-from mysql_database import get_conection
-
+from db import get_connection
 
 predicciones_bp = Blueprint("predicciones", __name__)
 
-@predicciones_bp.route("/partidos/<int:id>/prediccion", methods=["POST"])
-def crear_prediccion(id):
+@predicciones_bp.route("/partidos/<int:id>_partido/prototipo_predicciones", methods=["POST"])
+def crear_prediccion(id_partido):
 
     data = request.get_json()
     id_usuario = data.get("usuario_id")
@@ -20,18 +19,18 @@ def crear_prediccion(id):
 
 
     try:
-        conn = get_conection()
+        conn = get_connection()
         cursor = conn.cursor(dictionary=True)
 
         #vrificar que el partido exista
-        cursor.execute("SELECT * FROM partidos WHERE id = %s", (id,))
+        cursor.execute("SELECT * FROM partidos WHERE id = %s", (id_partido,))
         partido = cursor.fetchone()
 
         if not partido:
             return jsonify({"error": "El partido no existe"}), 404
 
         #verificar que no tenga resultado
-        cursor.execute("SELECT * FROM resultados WHERE id_partido = %s", (id,))
+        cursor.execute("SELECT * FROM resultados WHERE id_partido = %s", (id_partido,))
         resultado = cursor.fetchone()
 
         if resultado:
@@ -41,7 +40,7 @@ def crear_prediccion(id):
         cursor.execute("""
             SELECT * FROM predicciones 
             WHERE id_usuario = %s AND id_partido = %s
-        """, (id_usuario, id))
+        """, (id_usuario, id_partido))
 
         if cursor.fetchone():
             return jsonify({"error": "Ya hiciste una predicción para este partido"}), 400

@@ -39,10 +39,10 @@ def obtener_ranking_usuarios():
         p.id_usuario, 
         p.prediccion_goles_local, 
         p.prediccion_goles_visitante
-FROM resultados r
-INNER JOIN predicciones p
-ON r.id_partido = p.id_partido 
-"""
+        FROM resultados r
+        INNER JOIN predicciones p
+        ON r.id_partido = p.id_partido 
+        """
         )
 
         usuarios = cur.fetchall()
