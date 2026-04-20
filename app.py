@@ -2,7 +2,7 @@ from flask import Flask
 
 from routes.partidos import partidos_bp
 from routes.usuarios import usuarios_bp
-from routes.predicciones import predicciones_bp
+from routes.prototipo_predicciones import predicciones_bp
 from routes.resultados import resultados_bp
 from routes.ranking import ranking_bp
 
