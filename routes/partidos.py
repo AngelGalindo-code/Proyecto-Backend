@@ -241,7 +241,7 @@ def actualizar_parcialmente_partido(id_partido):
             equipo_visitante = COALESCE(%s, equipo_visitante),
             fecha = COALESCE(%s, fecha),
             fase = COALESCE(%s, fase)
-        WHERE id = %s
+        WHERE id_partido = %s
         """
 
         cursor.execute(query, (equipo_local, equipo_visitante, fecha, fase, id_partido))
@@ -249,7 +249,7 @@ def actualizar_parcialmente_partido(id_partido):
         
         if cursor.rowcount == 0:
             error_404 = not_found.copy()
-            error_404["errors"][0]["description"] = f"El partido con ID {id_partido} no existe, no se pudo actualizar."
+            error_404["errors"][0]["description"] = f"El partido con ID {id_partido} no existe, no se pudo eliminar."
             return jsonify(error_404), 404
 
         
