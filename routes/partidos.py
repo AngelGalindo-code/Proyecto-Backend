@@ -278,14 +278,14 @@ def eliminar_partido(id_partido):
         conn = get_connection()
         cursor = conn.cursor()
 
-        query = "DELETE FROM partidos WHERE id = %s "
-        cursor.execute(query, (id_partido))
+        query = "DELETE FROM partidos WHERE id_partido = %s "
+        cursor.execute(query, (id_partido,))
 
         conn.commit()
         
         if cursor.rowcount == 0:
             error_404 = not_found.copy()
-            error_404["errors"][0]["description"] = f"El partido con ID {id_partido} no existe, no se pudo actualizar."
+            error_404["errors"][0]["description"] = f"El partido con ID {id_partido} no existe, no se pudo eliminar."
             return jsonify(error_404), 404
         
         
